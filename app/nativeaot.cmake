@@ -1,8 +1,6 @@
 
 # following https://github.com/dotnet/runtime/issues/70277#issuecomment-1575293355
 
-set(NUGET_PACKAGES_DIR "$ENV{HOME}/.nuget/packages")
-
 # depends on NATIVEAOT_FRAMEWORK_PATH and NATIVEAOT_SDK_PATH to be set
 # the sample sets is by generating the bin/libnaothello.cmake fragment during the managed build
 
