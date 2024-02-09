@@ -10,4 +10,24 @@
     <SelfContained>true</SelfContained>
   </PropertyGroup>
 
+  <PropertyGroup>
+      <StaticLibExt Condition="'$(TargetOS)' != 'Windows'">a</StaticLibExt>
+      <StaticLibExt Condition="'$(TargetOS)' == 'Windows'">lib</StaticLibExt>
+  </PropertyGroup>
+
+  <Target Name="WriteConfiguration" DependsOnTargets="SetupProperties" AfterTargets="Publish">
+      <PropertyGroup>
+          <LibArtifactFullPath>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)/$(PublishDir)libnaothello.$(StaticLibExt)'))</LibArtifactFullPath>
+      </PropertyGroup>
+      <ItemGroup>
+          <ConfigToWrite Include="set(LIBNAOTHELLO_PATH &quot;$(LibArtifactFullPath)&quot;)" />
+          <ConfigToWrite Include="set(NATIVEAOT_FRAMEWORK_PATH &quot;$(IlcFrameworkPath)&quot;)" />
+          <ConfigToWrite Include="set(NATIVEAOT_SDK_PATH &quot;$(IlcSdkPath)&quot;)" />
+      </ItemGroup>
+      <WriteLinesToFile File="$(BaseOutputPath)libnaothello.cmake"
+                        Lines="@(ConfigToWrite)"
+                        WriteOnlyWhenDifferent="true"
+                        Overwrite="true"/>
+  </Target>
+  
 </Project>

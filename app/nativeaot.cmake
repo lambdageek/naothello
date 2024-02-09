@@ -3,11 +3,8 @@
 
 set(NUGET_PACKAGES_DIR "$ENV{HOME}/.nuget/packages")
 
-set(NAOT_NUGET_DIR "${NUGET_PACKAGES_DIR}/runtime.linux-x64.microsoft.dotnet.ilcompiler/8.0.0")
-set(NAOT_SDK_DIR "${NAOT_NUGET_DIR}/sdk")
-set(NAOT_FRAMEWORK_DIR "${NAOT_NUGET_DIR}/framework")
-
-
+# depends on NATIVEAOT_FRAMEWORK_PATH and NATIVEAOT_SDK_PATH to be set
+# the sample sets is by generating the bin/libnaothello.cmake fragment during the managed build
 
 set(NAOT_SDK_LIBS
   libbootstrapperdll.o
@@ -15,7 +12,7 @@ set(NAOT_SDK_LIBS
   libeventpipe-disabled.a
   libstdc++compat.a)
 
-addprefix(NAOT_SDK_LIBS "${NAOT_SDK_DIR}" "${NAOT_SDK_LIBS}")
+addprefix(NAOT_SDK_LIBS "${NATIVEAOT_SDK_PATH}" "${NAOT_SDK_LIBS}")
 
 set(NAOT_FRAMEWORK_LIBS
   libSystem.Native.a
@@ -24,7 +21,7 @@ set(NAOT_FRAMEWORK_LIBS
   libSystem.Net.Security.Native.a
   libSystem.Security.Cryptography.Native.OpenSsl.a)
 
-addprefix(NAOT_FRAMEWORK_LIBS "${NAOT_FRAMEWORK_DIR}" "${NAOT_FRAMEWORK_LIBS}")
+addprefix(NAOT_FRAMEWORK_LIBS "${NATIVEAOT_FRAMEWORK_PATH}" "${NAOT_FRAMEWORK_LIBS}")
 
 add_library(nativeAotFramework INTERFACE)
 target_link_libraries (nativeAotFramework INTERFACE "${NAOT_SDK_LIBS}" "${NAOT_FRAMEWORK_LIBS}" -lm)
