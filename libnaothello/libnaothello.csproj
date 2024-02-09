@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PublishAot>true</PublishAot>
+    <NativeLib Condition="true">static</NativeLib>
+    <NativeLib Condition="false">Shared</NativeLib>
+    <SelfContained>true</SelfContained>
+  </PropertyGroup>
+
+</Project>
