@@ -8,20 +8,28 @@ include(../libnaothello/bin/libnaothello.cmake) # build output of the NativeAOT 
 
 include(nativeaot.cmake)
 
-add_library(naothello STATIC IMPORTED)
-set_property(TARGET naothello PROPERTY IMPORTED_LOCATION "${LIBNAOTHELLO_PATH}")
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+  add_library(naothello STATIC IMPORTED)
+  set_property(TARGET naothello PROPERTY IMPORTED_LOCATION "${LIBNAOTHELLO_PATH}")
+  target_link_options (naothello INTERFACE "LINKER:--exclude-libs=libnaothello.a")
+elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+  add_library(naothello INTERFACE IMPORTED)
+  target_link_libraries(naothello INTERFACE "-hidden-l${LIBNAOTHELLO_PATH}")
+endif()
 target_include_directories(naothello INTERFACE "../libnaothello/inc")
 # target_link_options(naothello INTERFACE "-Wl,-u,NativeAOT_StaticInitialization") # see https://github.com/dotnet/runtime/pull/89291
 
-add_executable(hello)
-target_sources (hello PRIVATE src/hello.c)
-target_link_libraries(hello PRIVATE nativeAotFramework naothello)
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-  target_link_options(hello PRIVATE "-Wl,--version-script=${CMAKE_SOURCE_DIR}/hello.exports")
-elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-  message("on apple")
-  target_link_options(hello PRIVATE -framework Foundation)
-endif()
-set_target_properties(hello PROPERTIES LINK_DEPENDS "${CMAKE_SOURCE_DIR}/hello.exports")
 
-install(TARGETS hello)
+add_library(helloLib SHARED)
+set_property(TARGET helloLib PROPERTY OUTPUT_NAME hello)
+target_sources (helloLib PRIVATE src/hello.c src/hello.h)
+set_property(TARGET helloLib PROPERTY C_VISIBILITY_PRESET hidden)
+target_link_libraries(helloLib PRIVATE nativeAotFramework naothello)
+target_include_directories(helloLib PUBLIC src)
+target_compile_definitions(helloLib PRIVATE -DCOMPILING_HELLOLIB)
+
+add_executable(hello)
+target_sources(hello PRIVATE src/main.c)
+target_link_libraries(hello PRIVATE helloLib)
+
+install(TARGETS hello helloLib)

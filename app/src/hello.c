@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <naothello.h>
+#include "hello.h"
 
 int
-main (void)
+hellolib_main (void)
 {
 	naot_Hello();
 	printf ("all done\n");
