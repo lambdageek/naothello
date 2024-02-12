@@ -11,8 +11,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-      <StaticLibExt Condition="'$(TargetOS)' != 'Windows'">a</StaticLibExt>
-      <StaticLibExt Condition="'$(TargetOS)' == 'Windows'">lib</StaticLibExt>
+      <StaticLibExt Condition="'$(OS)' != 'Windows_NT'">a</StaticLibExt>
+      <StaticLibExt Condition="'$(OS)' == 'Windows_NT'">lib</StaticLibExt>
   </PropertyGroup>
 
   <!-- From https://migeel.sk/blog/2024/01/02/building-a-self-contained-game-in-csharp-under-2-kilobytes/ -->
@@ -23,16 +23,30 @@
       <UseSystemResourceKeys>true</UseSystemResourceKeys>
   </PropertyGroup>
 
+  <!-- workaround https://github.com/dotnet/runtime/issues/95100 -->
+  <PropertyGroup>
+      <IlcGenerateWin32Resources>false</IlcGenerateWin32Resources>
+  </PropertyGroup>
+
   <Target Name="WriteConfiguration" DependsOnTargets="SetupProperties" AfterTargets="Publish">
       <PropertyGroup>
           <LibArtifactLibPath>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)/$(PublishDir)'))</LibArtifactLibPath>
           <LibArtifactFullPath>$([System.IO.Path]::GetFullPath('$(LibArtifactLibPath)libnaothello.$(StaticLibExt)'))</LibArtifactFullPath>
+          <LibArtifactIlcFrameworkPath>$(IlcFrameworkPath.TrimEnd('\\/'))</LibArtifactIlcFrameworkPath>
+          <LibArtifactIlcSdkPath>$(IlcSdkPath.TrimEnd('\\/'))</LibArtifactIlcSdkPath>
+      </PropertyGroup>
+      <!-- escape backslashes in windows-style paths to make cmake happy -->
+      <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+        <LibArtifactLibPath>$(LibArtifactLibPath.Replace('\', '\\'))</LibArtifactLibPath>
+        <LibArtifactFullPath>$(LibArtifactFullPath.Replace('\', '\\'))</LibArtifactFullPath>
+        <LibArtifactIlcFrameworkPath>$(LibArtifactIlcFrameworkPath.Replace('\', '\\'))</LibArtifactIlcFrameworkPath>
+        <LibArtifactIlcSdkPath>$(LibArtifactIlcSdkPath.Replace('\', '\\'))</LibArtifactIlcSdkPath>
       </PropertyGroup>
       <ItemGroup>
           <ConfigToWrite Include="set(LIBNAOTHELLO_LIBPATH &quot;$(LibArtifactLibPath.TrimEnd('\\/'))&quot;)" />
           <ConfigToWrite Include="set(LIBNAOTHELLO_PATH &quot;$(LibArtifactFullPath.TrimEnd('\\/'))&quot;)" />
-          <ConfigToWrite Include="set(NATIVEAOT_FRAMEWORK_PATH &quot;$(IlcFrameworkPath.TrimEnd('\\/'))&quot;)" />
-          <ConfigToWrite Include="set(NATIVEAOT_SDK_PATH &quot;$(IlcSdkPath.TrimEnd('\\/'))&quot;)" />
+          <ConfigToWrite Include="set(NATIVEAOT_FRAMEWORK_PATH &quot;$(LibArtifactIlcFrameworkPath)&quot;)" />
+          <ConfigToWrite Include="set(NATIVEAOT_SDK_PATH &quot;$(LibArtifactIlcSdkPath)&quot;)" />
       </ItemGroup>
       <WriteLinesToFile File="$(BaseOutputPath)libnaothello.cmake"
                         Lines="@(ConfigToWrite)"

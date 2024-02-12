@@ -19,13 +19,21 @@ elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
   add_library(naothello INTERFACE IMPORTED)
   target_link_directories(naothello INTERFACE "${LIBNAOTHELLO_LIBPATH}")
   target_link_libraries(naothello INTERFACE "-Wl,-hidden-lnaothello")
+elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+  add_library(naothello STATIC IMPORTED)
+  set_property(TARGET naothello PROPERTY IMPORTED_LOCATION "${LIBNAOTHELLO_PATH}")
 endif()
 target_include_directories(naothello INTERFACE "../libnaothello/inc")
 # target_link_options(naothello INTERFACE "-Wl,-u,NativeAOT_StaticInitialization") # see https://github.com/dotnet/runtime/pull/89291
 
 
 add_library(helloLib SHARED)
+
+if(NOT ${CMAEK_SYSTEM_NAME} STREQUAL "Windows")
 set_property(TARGET helloLib PROPERTY OUTPUT_NAME hello)
+else()
+  set_property(TARGET helloLib PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
 target_sources (helloLib PRIVATE src/hello.c src/hello.h)
 set_property(TARGET helloLib PROPERTY C_VISIBILITY_PRESET hidden)
 target_link_libraries(helloLib PRIVATE nativeAotFramework naothello)
