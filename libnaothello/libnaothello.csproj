@@ -28,6 +28,12 @@
       <IlcGenerateWin32Resources>false</IlcGenerateWin32Resources>
   </PropertyGroup>
 
+
+  <!-- if we're doing a debug build, link the debug ucrt -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug' and '$(OS)' == 'Windows_NT'">
+      <IlcCompileDependsOn>MessWithIlc</IlcCompileDependsOn>
+  </PropertyGroup>
+  
   <Target Name="WriteConfiguration" DependsOnTargets="SetupProperties" AfterTargets="Publish">
       <PropertyGroup>
           <LibArtifactLibPath>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)/$(PublishDir)'))</LibArtifactLibPath>
@@ -52,6 +58,14 @@
                         Lines="@(ConfigToWrite)"
                         WriteOnlyWhenDifferent="true"
                         Overwrite="true"/>
+  </Target>
+
+  <Target Name="MessWithIlc" DependsOnTargets="SetupOSSpecificProps" Condition="'$(Configuration)' == 'Debug' and '$(OS)' == 'Windows_NT'">
+      <Message Importance="High" Text="Doing a debug build, messing with ILC" />
+      <ItemGroup>
+          <LinkerArg Remove="/DEFAULTLIB:ucrt.lib" />
+          <LinkerArg Include="/DEFAULTLIB:ucrtd.lib" />
+      </ItemGroup>
   </Target>
   
 </Project>
