@@ -13,6 +13,9 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
   set_property(TARGET naothello PROPERTY IMPORTED_LOCATION "${LIBNAOTHELLO_PATH}")
   target_link_options (naothello INTERFACE "LINKER:--exclude-libs=libnaothello.a")
 elseif(${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+  ## FIXME: because we're not telling cmake that ${LIBNAOTHELLO_LIBPATH}/libnaothello.a is a
+  ## dependency, this doesn't relink helloLib if libnaothello.a changes since Cmake doesn't
+  ## understand the -hidden-lx switch.
   add_library(naothello INTERFACE IMPORTED)
   target_link_directories(naothello INTERFACE "${LIBNAOTHELLO_LIBPATH}")
   target_link_libraries(naothello INTERFACE "-Wl,-hidden-lnaothello")
