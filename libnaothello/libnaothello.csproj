@@ -17,12 +17,14 @@
 
   <Target Name="WriteConfiguration" DependsOnTargets="SetupProperties" AfterTargets="Publish">
       <PropertyGroup>
-          <LibArtifactFullPath>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)/$(PublishDir)libnaothello.$(StaticLibExt)'))</LibArtifactFullPath>
+          <LibArtifactLibPath>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)/$(PublishDir)'))</LibArtifactLibPath>
+          <LibArtifactFullPath>$([System.IO.Path]::GetFullPath('$(LibArtifactLibPath)libnaothello.$(StaticLibExt)'))</LibArtifactFullPath>
       </PropertyGroup>
       <ItemGroup>
-          <ConfigToWrite Include="set(LIBNAOTHELLO_PATH &quot;$(LibArtifactFullPath)&quot;)" />
-          <ConfigToWrite Include="set(NATIVEAOT_FRAMEWORK_PATH &quot;$(IlcFrameworkPath)&quot;)" />
-          <ConfigToWrite Include="set(NATIVEAOT_SDK_PATH &quot;$(IlcSdkPath)&quot;)" />
+          <ConfigToWrite Include="set(LIBNAOTHELLO_LIBPATH &quot;$(LibArtifactLibPath.TrimEnd('\\/'))&quot;)" />
+          <ConfigToWrite Include="set(LIBNAOTHELLO_PATH &quot;$(LibArtifactFullPath.TrimEnd('\\/'))&quot;)" />
+          <ConfigToWrite Include="set(NATIVEAOT_FRAMEWORK_PATH &quot;$(IlcFrameworkPath.TrimEnd('\\/'))&quot;)" />
+          <ConfigToWrite Include="set(NATIVEAOT_SDK_PATH &quot;$(IlcSdkPath.TrimEnd('\\/'))&quot;)" />
       </ItemGroup>
       <WriteLinesToFile File="$(BaseOutputPath)libnaothello.cmake"
                         Lines="@(ConfigToWrite)"
