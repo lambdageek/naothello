@@ -3,8 +3,12 @@
 # depends on NATIVEAOT_FRAMEWORK_PATH and NATIVEAOT_SDK_PATH to be set
 # the sample sets is by generating the bin/libnaothello.cmake fragment during the managed build
 
-set(NAOT_SDK_BASE_BOOTSTRAP
-  ${CMAKE_STATIC_LIBRRAY_PREFIX}bootstrapperdll${CMAKE_C_OUTPUT_EXTENSION})
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+  set(NAOT_SDK_BASE_BOOTSTRAP bootstrapperdll${CMAKE_C_OUTPUT_EXTENSION})
+else()
+  set(NAOT_SDK_BASE_BOOTSTRAP libbootstrapperdll${CMAKE_C_OUTPUT_EXTENSION})
+endif()
+
 set(NAOT_SDK_BASE_LIBS
   Runtime.WorkstationGC
   eventpipe-disabled)
