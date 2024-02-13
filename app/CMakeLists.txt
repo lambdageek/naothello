@@ -29,8 +29,8 @@ target_include_directories(naothello INTERFACE "../libnaothello/inc")
 
 add_library(helloLib SHARED)
 
-if(NOT ${CMAEK_SYSTEM_NAME} STREQUAL "Windows")
-set_property(TARGET helloLib PROPERTY OUTPUT_NAME hello)
+if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
+  set_property(TARGET helloLib PROPERTY OUTPUT_NAME hello)
 else()
   set_property(TARGET helloLib PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
