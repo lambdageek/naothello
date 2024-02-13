@@ -5,14 +5,38 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PublishAot>true</PublishAot>
-    <NativeLib Condition="true">static</NativeLib>
-    <NativeLib Condition="false">Shared</NativeLib>
     <SelfContained>true</SelfContained>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(NativeLib)' == ''">
+    <!-- if not explicitly set, build a static lib everywhere by default, except on Windows in debug config-->
+    <NativeLib Condition="'$(OS)' == 'Windows_NT' and '$(Configuration)' == 'Debug'">shared</NativeLib>
+    <NativeLib Condition="'$(NativeLib)' == ''">static</NativeLib>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- in net9.0 we can do this -->
+    <SharedLibraryInstallName>@rpath/$(MSBuildProjectName).dylib</SharedLibraryInstallName>
+  </PropertyGroup>
+
+  <!-- borrow from dotnet/runtime's DotNetBuild.props-->
+  <PropertyGroup>
+    <_hostRid>$([System.Runtime.InteropServices.RuntimeInformation]::RuntimeIdentifier)</_hostRid>
+    <!-- TargetRid names what gets built. -->
+    <TargetRid Condition="'$(TargetRid)' == ''">$(_hostRid)</TargetRid>
+
+    <!-- Split e.g. 'fedora.33-x64' into 'fedora.33' and 'x64'. -->
+    <_targetRidPlatformIndex>$(TargetRid.LastIndexOf('-'))</_targetRidPlatformIndex>
+    <TargetArch>$(TargetRid.Substring($(_targetRidPlatformIndex)).TrimStart('-'))</TargetArch>
+    <TargetOS>$(TargetRid.Substring(0, $(_targetRidPlatformIndex)))</TargetOS>
   </PropertyGroup>
 
   <PropertyGroup>
       <StaticLibExt Condition="'$(OS)' != 'Windows_NT'">a</StaticLibExt>
       <StaticLibExt Condition="'$(OS)' == 'Windows_NT'">lib</StaticLibExt>
+      <DynamicLibExt Condition="'$(OS)' == 'Windows_NT'">dll</DynamicLibExt>
+      <DynamicImpLibExt Condition="'$(OS)' == 'Windows_NT'">lib</DynamicImpLibExt>
+      <DynamicLibExt Condition="'$(TargetOS)' == 'osx'">dylib</DynamicLibExt>
+      <DynamicLibExt Condition="'$(DynamicLibExt)' == ''">so</DynamicLibExt>
   </PropertyGroup>
 
   <!-- From https://migeel.sk/blog/2024/01/02/building-a-self-contained-game-in-csharp-under-2-kilobytes/ -->
@@ -28,7 +52,7 @@
       <IlcGenerateWin32Resources>false</IlcGenerateWin32Resources>
   </PropertyGroup>
 
-  <Target Name="WriteConfiguration" DependsOnTargets="SetupProperties" AfterTargets="Publish">
+  <Target Name="WriteConfigurationStatic" DependsOnTargets="SetupProperties" AfterTargets="Publish" Condition="'$(NativeLib)' == 'static'">
       <PropertyGroup>
           <LibArtifactLibPath>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)/$(PublishDir)'))</LibArtifactLibPath>
           <LibArtifactFullPath>$([System.IO.Path]::GetFullPath('$(LibArtifactLibPath)libnaothello.$(StaticLibExt)'))</LibArtifactFullPath>
@@ -43,6 +67,7 @@
         <LibArtifactIlcSdkPath>$(LibArtifactIlcSdkPath.Replace('\', '\\'))</LibArtifactIlcSdkPath>
       </PropertyGroup>
       <ItemGroup>
+          <ConfigToWrite Include="set(LIBNAOTHELLO_MODE &quot;static&quot;)" />
           <ConfigToWrite Include="set(LIBNAOTHELLO_LIBPATH &quot;$(LibArtifactLibPath.TrimEnd('\\/'))&quot;)" />
           <ConfigToWrite Include="set(LIBNAOTHELLO_PATH &quot;$(LibArtifactFullPath.TrimEnd('\\/'))&quot;)" />
           <ConfigToWrite Include="set(NATIVEAOT_FRAMEWORK_PATH &quot;$(LibArtifactIlcFrameworkPath)&quot;)" />
@@ -52,6 +77,34 @@
                         Lines="@(ConfigToWrite)"
                         WriteOnlyWhenDifferent="true"
                         Overwrite="true"/>
+  </Target>
+  <Target Name="WriteConfigurationShared" DependsOnTargets="SetupProperties" AfterTargets="Publish" Condition="'$(NativeLib)' == 'shared'">
+      <PropertyGroup>
+          <LibArtifactLibPath>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)/$(PublishDir)'))</LibArtifactLibPath>
+          <LibArtifactFullPath>$([System.IO.Path]::GetFullPath('$(LibArtifactLibPath)libnaothello.$(DynamicLibExt)'))</LibArtifactFullPath>
+          <LibArtifactImpLibFullPath Condition="'$(OS)' == 'Windows_NT'">$([System.IO.Path]::GetFullPath('$(LibArtifactLibPath)libnaothello.$(DynamicImpLibExt)'))</LibArtifactImpLibFullPath>
+      </PropertyGroup>
+      <!-- escape backslashes in windows-style paths to make cmake happy -->
+      <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+        <LibArtifactLibPath>$(LibArtifactLibPath.Replace('\', '\\'))</LibArtifactLibPath>
+        <LibArtifactImpLibFullPath>$(LibArtifactImpLibFullPath.Replace('\', '\\'))</LibArtifactImpLibFullPath>
+        <LibArtifactFullPath>$(LibArtifactFullPath.Replace('\', '\\'))</LibArtifactFullPath>
+      </PropertyGroup>
+      <ItemGroup>
+          <ConfigToWrite Include="set(LIBNAOTHELLO_MODE &quot;shared&quot;)" />
+          <ConfigToWrite Include="set(LIBNAOTHELLO_LIBPATH &quot;$(LibArtifactLibPath.TrimEnd('\\/'))&quot;)" />
+          <ConfigToWrite Include="set(LIBNAOTHELLO_IMPLIBPATH &quot;$(LibArtifactImpLibFullPath.TrimEnd('\\/'))&quot;)" Condition="'$(OS)' == 'Windows_NT'"/>
+          <ConfigToWrite Include="set(LIBNAOTHELLO_PATH &quot;$(LibArtifactFullPath.TrimEnd('\\/'))&quot;)" />
+      </ItemGroup>
+      <WriteLinesToFile File="$(BaseOutputPath)libnaothello.cmake"
+                        Lines="@(ConfigToWrite)"
+                        WriteOnlyWhenDifferent="true"
+                        Overwrite="true"/>
+  </Target>
+
+  <Target Name="ChangeInstallName" DependsOnTargets="WriteConfigurationShared" AfterTargets="CopyNativeBinary" Condition="'$(NativeLib)' == 'shared' and '$(TargetOS)' == 'osx'">
+      <Message Importance="High" Text="Runing install_name_tool -id $(SharedLibraryInstallName) $(LibArtifactFullPath)" />
+      <Exec Command="install_name_tool -id $(SharedLibraryInstallName) $(LibArtifactFullPath)" />
   </Target>
   
 </Project>
