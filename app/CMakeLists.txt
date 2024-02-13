@@ -35,7 +35,7 @@ else()
   set_property(TARGET helloLib PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
   # if doing a debug build, tell the linker to not link ucrt.lib which was used by the nativeaot build to build the support libraries.
-  target_link_options(helloLib PRIVATE "$<$<CONFIG:Debug>:/NODEFAULTLIB:libcmt /NODEFAULTLIB:libcpmt>")
+  target_link_options(helloLib PRIVATE "$<$<CONFIG:Debug>:/NODEFAULTLIB:libcmt;/NODEFAULTLIB:libcpmt>")
 endif()
 target_sources (helloLib PRIVATE src/hello.c src/hello.h)
 set_property(TARGET helloLib PROPERTY C_VISIBILITY_PRESET hidden)
