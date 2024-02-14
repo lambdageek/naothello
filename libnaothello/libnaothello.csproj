@@ -79,10 +79,15 @@
                         Overwrite="true"/>
   </Target>
   <Target Name="WriteConfigurationShared" DependsOnTargets="SetupProperties" AfterTargets="Publish" Condition="'$(NativeLib)' == 'shared'">
+      <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+          <!-- the import lib is in the native sub-directory, not publish-->
+          <_NativeBinaryPath>$([System.IO.Path]::GetDirectoryName('$(NativeBinary)'))/</_NativeBinaryPath>
+          <_NativeBinaryPath>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)/$(_NativeBinaryPath)'))</_NativeBinaryPath>
+          <LibArtifactImpLibFullPath>$([System.IO.Path]::GetFullPath('$(_NativeBinaryPath)libnaothello.$(DynamicImpLibExt)'))</LibArtifactImpLibFullPath>
+      </PropertyGroup>
       <PropertyGroup>
           <LibArtifactLibPath>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)/$(PublishDir)'))</LibArtifactLibPath>
           <LibArtifactFullPath>$([System.IO.Path]::GetFullPath('$(LibArtifactLibPath)libnaothello.$(DynamicLibExt)'))</LibArtifactFullPath>
-          <LibArtifactImpLibFullPath Condition="'$(OS)' == 'Windows_NT'">$([System.IO.Path]::GetFullPath('$(LibArtifactLibPath)libnaothello.$(DynamicImpLibExt)'))</LibArtifactImpLibFullPath>
       </PropertyGroup>
       <!-- escape backslashes in windows-style paths to make cmake happy -->
       <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
